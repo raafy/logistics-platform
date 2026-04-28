@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("TRACKING_DATABASE_URL")
+}
+
+model Shipment {
+  id        String          @id @default(uuid())
+  orderId   String          @unique
+  status    String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  events    TrackingEvent[]
+
+  @@map("shipments")
+}
+
+model TrackingEvent {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  status     String
+  occurredAt DateTime
+  location   Json?
+
+  @@index([shipmentId, occurredAt])
+  @@map("tracking_events")
+}
+
+model ProcessedMessage {
+  id           String   @id @default(uuid())
+  consumerName String
+  eventId      String
+  eventType    String
+  processedAt  DateTime @default(now())
+
+  @@unique([consumerName, eventId])
+  @@map("processed_messages")
+}
+
+model Outbox {
+  id            String    @id @default(uuid())
+  aggregateType String
+  aggregateId   String
+  eventType     String
+  routingKey    String
+  payload       Json
+  headers       Json?
+  attempts      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  publishedAt   DateTime?
+  deadAt        DateTime?
+  lastError     String?
+
+  @@index([publishedAt, deadAt, createdAt])
+  @@map("outbox")
+}

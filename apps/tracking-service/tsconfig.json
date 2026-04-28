@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "types": ["node"]
+  },
+  "references": [
+    { "path": "../../libs/contracts" },
+    { "path": "../../libs/messaging" },
+    { "path": "../../libs/observability" }
+  ],
+  "include": ["src/**/*", "test/**/*", "vitest.config.ts"]
+}
