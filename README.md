@@ -1,6 +1,6 @@
 # Real-Time Logistics & Tracking System
 
-[![CI](https://github.com/USER/logistics-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/logistics-platform/actions/workflows/ci.yml)
+[![CI](https://github.com/raafy/logistics-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/raafy/logistics-platform/actions/workflows/ci.yml)
 
 A senior-level showcase of **event-driven NestJS microservices** demonstrating:
 
