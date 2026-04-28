@@ -1,0 +1,38 @@
+{
+  "name": "@logistics/testing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Test infrastructure: Testcontainers wrappers, fixture builders, integration test utilities",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist .turbo",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@logistics/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^10.16.0",
+    "@testcontainers/rabbitmq": "^10.16.0",
+    "@testcontainers/redis": "^10.16.0",
+    "@types/amqplib": "^0.10.6",
+    "@types/node": "^22.9.0",
+    "@types/pg": "^8.11.10",
+    "amqplib": "^0.10.5",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0",
+    "testcontainers": "^10.16.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
