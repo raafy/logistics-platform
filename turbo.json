@@ -1,0 +1,42 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["tsconfig.base.json", ".env"],
+  "globalEnv": ["NODE_ENV", "LOG_LEVEL", "OTEL_EXPORTER_OTLP_ENDPOINT"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build", "prisma:generate"],
+      "outputs": ["dist/**"],
+      "inputs": ["src/**", "tsconfig*.json", "package.json", "prisma/**"]
+    },
+    "prisma:generate": {
+      "cache": false,
+      "outputs": ["prisma/generated/**", "node_modules/.prisma/**"],
+      "inputs": ["prisma/schema.prisma"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**", "test/**", "vitest.config.ts", "package.json"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    }
+  }
+}
