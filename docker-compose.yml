@@ -1,0 +1,133 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: logistics-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_ROOT_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ROOT_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: logistics-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: logistics-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ─── Services (built from local Dockerfiles in later phases) ──────────
+  order-service:
+    profiles: ["services", "full"]
+    build:
+      context: .
+      dockerfile: apps/order-service/Dockerfile
+    container_name: logistics-order-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ORDER_SERVICE_PORT: 3001
+      ORDER_DATABASE_URL: postgresql://order_svc:order_pw@postgres:5432/order_db?schema=public
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_EXCHANGE: logistics.events
+      REDIS_URL: redis://redis:6379
+      TRACKING_SERVICE_URL: http://tracking-service:3002
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+    ports:
+      - "3001:3001"
+
+  tracking-service:
+    profiles: ["services", "full"]
+    build:
+      context: .
+      dockerfile: apps/tracking-service/Dockerfile
+    container_name: logistics-tracking-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TRACKING_SERVICE_PORT: 3002
+      TRACKING_DATABASE_URL: postgresql://tracking_svc:tracking_pw@postgres:5432/tracking_db?schema=public
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_EXCHANGE: logistics.events
+      REDIS_URL: redis://redis:6379
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+    ports:
+      - "3002:3002"
+
+  notification-service:
+    profiles: ["services", "full"]
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    container_name: logistics-notification-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      NOTIFICATION_SERVICE_PORT: 3003
+      NOTIFICATION_DATABASE_URL: postgresql://notification_svc:notification_pw@postgres:5432/notification_db?schema=public
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      RABBITMQ_EXCHANGE: logistics.events
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+    ports:
+      - "3003:3003"
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
