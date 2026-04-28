@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("ORDER_DATABASE_URL")
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  customerId String
+  status     String
+  totalCents Int
+  currency   String
+  placedAt   DateTime
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  items      OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String @id @default(uuid())
+  orderId        String
+  order          Order  @relation(fields: [orderId], references: [id])
+  sku            String
+  name           String
+  quantity       Int
+  unitPriceCents Int
+
+  @@map("order_items")
+}
+
+model Outbox {
+  id            String    @id @default(uuid())
+  aggregateType String
+  aggregateId   String
+  eventType     String
+  routingKey    String
+  payload       Json
+  headers       Json?
+  attempts      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  publishedAt   DateTime?
+  deadAt        DateTime?
+  lastError     String?
+
+  @@index([publishedAt, attempts])
+  @@map("outbox")
+}
