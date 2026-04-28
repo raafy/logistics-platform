@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/raafy/logistics-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/raafy/logistics-platform/actions/workflows/ci.yml)
 
-A senior-level showcase of **event-driven NestJS microservices** demonstrating:
+A showcase of **event-driven NestJS microservices** demonstrating:
 
 - **Transactional Outbox Pattern** — atomic domain + event writes, no dual-write race
 - **DB-first idempotent consumers** — crash-safe deduplication via unique constraints
